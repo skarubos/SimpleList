@@ -68,10 +68,10 @@ class ScrapingController extends Controller
 //         $cookieParts = explode(';', $setCookieHeader[0]);
 //         $cookieKeyValue = explode('=', $cookieParts[0]);
 //         $cookieName = $cookieKeyValue[0];
-        // $cookieValue = $cookieKeyValue[1];
-        
+//         $cookieValue = $cookieKeyValue[1];
+
         $cookieName = 'laravel_session';
-        $cookieValue = 'eyJpdiI6Ikw3U3pqRVEwOHVvU3AxWHdQSGlDdWc9PSIsInZhbHVlIjoiMHJrM0ZlRm5DYzZmSllwU2RCckN4QmJNU0dPRmJvcm01a0tPOTdjcHBOZTZiVlVjVUNMVVg1NzRvWEErYnRjd1NqQjJUTUhZVGJrdGtmNXFXek9sc2c9PSIsIm1hYyI6IjZkNjQzNGJjOWQ4YmNiYjA1MDNjODQwOTIyNzNjY2JhNDJiZDBmZjk2YTE1NzRhNWRlMThhY2Q5OWIxZGY4NzgifQ%3D%3D';
+        $cookieValue = 'eyJpdiI6IjBWQ0xBRGt5QVhucVFuRDNoVjNDVkE9PSIsInZhbHVlIjoiMFpBc2dEc2pzYnZlUjdoSWZyMHk3anFPV1hlTnlJWWN4d3dUeUNYSzBDWmRLdlBcL0wwak1qV0VIN0xrUldQVEpBVjBcL3NMUjNmM1g4ejZQaENIaEpHZz09IiwibWFjIjoiNzJkODMwYTI2MzRiODEwNzk3ODNkNzY1ZWExMTA4YzJiZmE1NmRkYWFmMjBhMzllNzU4ZmNkYmFlNjdlMTRmYSJ9';
 
         // Secure属性をtrueにしてクッキーを作成
         $setCookie = new SetCookie([
@@ -125,13 +125,6 @@ dd($tables);
 
         // テーブルデータを表示
         dd($tableData);
-    }
-
-
-    public function show_dev_home()
-    {
-        $items = develop::get();
-        return view('dev-home', compact('items'));
     }
 
     public function scrape_to_show(Request $request){
