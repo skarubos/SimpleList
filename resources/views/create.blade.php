@@ -1,6 +1,4 @@
-@extends('layouts.app')
-
-@section('content')
+<x-app-layout>
 <div class="flex justify-center items-center pt-5">
     <div class="relative flex w-9/12 p-3 flex-col rounded-xl bg-slate-800 bg-clip-border text-gray-200 shadow-md">
         <div class="p-3 text-center">買い物リストに追加</div>
@@ -17,4 +15,4 @@
         </form>
     </div>
 </div>
-@endsection
+</x-app-layout>

@@ -18,6 +18,9 @@
                     <x-nav-link :href="route('home')" :active="request()->routeIs('home')">
                         {{ __('Home') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('dev.home')" :active="request()->routeIs('dev*')">
+                        {{ __('開発') }}
+                    </x-nav-link>
                 </div>
             </div>
 

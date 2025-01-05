@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ScrapingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -19,7 +20,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/home', [HomeController::class, 'home'])->name('home');
     Route::get('/create', [HomeController::class, 'create'])->name('create');
     Route::post('/store', [HomeController::class, 'store'])->name('store');
-    Route::post('/delete/{id}', [HomeController::class, 'delete'])->name('delete');   
+    Route::post('/delete/{id}', [HomeController::class, 'delete'])->name('delete');
+    Route::get('/dev', [ScrapingController::class, 'show_dev_home'])->name('dev.home');
+    Route::post('/dev/scraping/show', [ScrapingController::class, 'scrape_to_show'])->name('dev.scraping.show');
+    Route::post('/dev/scraping', [ScrapingController::class, 'scrape'])->name('dev.scraping');
 });
 
 require __DIR__.'/auth.php';
