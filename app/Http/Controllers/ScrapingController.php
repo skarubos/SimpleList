@@ -19,21 +19,27 @@ use Symfony\Component\DomCrawler\Crawler;
 class ScrapingController extends Controller
 {
 
+    function getNo($string) {
+        $string = substr($string, strlen('month02?jutyuno='));
+        $string = substr($string, 0, -15);
+        return $string;
+    }
     
     // GuzzleとSymfony\DomCrawlerのテスト
     public function scrape(Request $request){
 
-        $url_login = $request->input('url_a');
-// dd($url_login);
+        $url_base = $request->input('url_a');
+        $url_login = $request->input('url_b');
+        $url_list = $request->input('url_c');
+// dd($url_base);
 
-        // Cookie を保存するファイル名
-        // $cookieFile = storage_path('app/cookies.txt');
-        // $cookieJar = new SessionCookieJar($cookieFile, true);
-        // $jar = new CookieJar();
         $client = new Client([
+            'base_uri' => $url_base, // サイトのベースURL
             'cookies' => true,
             'allow_redirects' => true,
         ]);
+
+
 
 //         $response = $client->get($url_login);
 // // dd($response);
@@ -70,8 +76,10 @@ class ScrapingController extends Controller
 //         $cookieName = $cookieKeyValue[0];
 //         $cookieValue = $cookieKeyValue[1];
 
+
+
         $cookieName = 'laravel_session';
-        $cookieValue = 'eyJpdiI6IjBWQ0xBRGt5QVhucVFuRDNoVjNDVkE9PSIsInZhbHVlIjoiMFpBc2dEc2pzYnZlUjdoSWZyMHk3anFPV1hlTnlJWWN4d3dUeUNYSzBDWmRLdlBcL0wwak1qV0VIN0xrUldQVEpBVjBcL3NMUjNmM1g4ejZQaENIaEpHZz09IiwibWFjIjoiNzJkODMwYTI2MzRiODEwNzk3ODNkNzY1ZWExMTA4YzJiZmE1NmRkYWFmMjBhMzllNzU4ZmNkYmFlNjdlMTRmYSJ9';
+        $cookieValue = 'eyJpdiI6ImhaRFJiaGYxODQ4dDVIczJNUlU3T1E9PSIsInZhbHVlIjoiUXBBdks5TjJrSm9cL21mTDVkZE8xRUlcLzRZRUl4MzJGc0tTaVhuNnhvYVVLZDU4Y3lEVVNjbXd4dDR1Tzhub25Oa2lJV0NoZTNJbUYwMEZWRTA0bkFYUT09IiwibWFjIjoiNWYyNTkyYmMxZTY2MDViMjAyODgwMDhlNWNkNWQ5ZDdlOWRjNjE3OGNmMjg5YjA5ZjQzNDQwMDFhNWY3OGVhMSJ9';
 
         // Secure属性をtrueにしてクッキーを作成
         $setCookie = new SetCookie([
@@ -92,83 +100,98 @@ class ScrapingController extends Controller
 // dd($cookies);
 
         // ログイン後のページにアクセス
-        $url_list = $request->input('url_b');
-        // $response = $client->get($url_list);
         $response = $client->get($url_list, [
             'cookies' => $jar,
         ]);
         $html = $response->getBody()->getContents();
-dd($url_list,$html);
+// dd($url_list,$cookieValue,$html);
+
 
         // DomCrawlerでHTMLを解析
-        $crawler = new Crawler($response->getBody());
-        $tables = $crawler->filter('table')->each(function (Crawler $node) {
-            return $node->filter('tr')->each(function (Crawler $node) {
-                return $node->filter('td')->each(function (Crawler $node) {
-                    return $node->text();
-                });
-            });
-        });
-dd($tables);
-
-        // HTMLを解析して任意のテーブルデータを取得
         $crawler = new Crawler($html);
-        $tableData = [];
 
-        $crawler->filter('table tr')->each(function ($node) use (&$tableData) {
-            $row = [];
-            $node->filter('td')->each(function ($cell) use (&$row) {
-                $row[] = $cell->text();
+        // titleタグを取得
+        $title = $crawler->filter('h3.title')->text();
+        // tableの内容を取得
+        $tradeData = [];
+        $crawler->filter('tbody.table-hover tr')
+            ->each(function ($node) use (&$tradeData) {
+                $row = [
+                    'link' => $node->filter('td')->eq(1)->filter('a')->attr('href'),
+                    'date' => $node->filter('td')->eq(3)->text(),
+                    'name' => $node->filter('td')->eq(6)->text(),
+                    'salse' => $node->filter('td')->eq(7)->text(),
+                    'in' => $node->filter('td')->eq(8)->text(),
+                    'out' => $node->filter('td')->eq(9)->text(),
+                ];
+                $tradeData[] = $row;
             });
-            $tableData[] = $row;
+        // salse, in, outの3つ全てに値が存在しない要素をフィルタリング
+        $tradeData = array_filter($tradeData, function($row) {
+            return !empty($row['salse']) || !empty($row['in']) || !empty($row['out']);
         });
+        // 'link'から'jutyuno'を抽出して追加
+        foreach ($tradeData as &$row) {
+            $row['jutyuno'] = $this->getNo($row['link']);
+        }
+// dd($title,$tradeData,$html);
 
-        // テーブルデータを表示
-        dd($tableData);
-    }
-
-    public function scrape_to_show(Request $request){
-        // URLからHTMLを取得
-        $url = $request->get_web;
-
-        // cURLを使用してデータを取得
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $html = curl_exec($ch);
-        curl_close($ch);
-dd($html);
-        $dom = new DOMDocument;
-        @$dom->loadHTML($html);
-        $xpath = new DOMXPath($dom);
-
-        // id="tablefix1"のtableを取得
-        $tables = $xpath->query('//table[@id="tablefix1"]');
-
-        $arr = array();
-
-        foreach ($tables as $table) {
-            $rows = $table->getElementsByTagName('tr');
-            foreach ($rows as $row) {
-                $cols = $row->getElementsByTagName('td');
-                if ($cols->length > 0) {
-                    // 'temperature', 'humidity', 'sunlight'の値が数値の文字列の場合は数値に変換、それ以外の場合はnullを格納
-                    $temperature = is_numeric($cols->item(4)->nodeValue) ? floatval($cols->item(4)->nodeValue) : null;
-                    $humidity = is_numeric($cols->item(5)->nodeValue) ? floatval($cols->item(5)->nodeValue) : null;
-                    $sunlight = is_numeric($cols->item(10)->nodeValue) ? intval($cols->item(10)->nodeValue) * 10 : null;
-                    // 0, 4, 5, 10番目の列のデータを取得
-                    $arr[] = array(
-                        'time' => $cols->item(0)->nodeValue,
-                        'temperature' => $temperature,
-                        'humidity' => $humidity,
-                        'sunlight' => $sunlight
-                    );
-                }
+        $arr = [];
+        // 未登録の取引のみ抽出
+        $newTrade = [];
+        foreach ($tradeData as $trade) {
+            if (!in_array($trade['jutyuno'], $arr)) {
+                $newTrade[] = $trade;
             }
         }
-// dd($arr);
-        // データをビューに渡す
-        return view('show-result-weather', ['weatherData' => $arr]);
+        if ($newTrade === []) {
+            return("未登録の取引は存在しませんでした。");
+        }
+        
+        $num = 0;
+        $details = [];
+        foreach ($newTrade as $trade) {
+            $num++;
+            // 既に登録されている取引はスキップ
+            if (in_array($trade['jutyuno'], $arr)) {
+                continue;
+            }
+            if ($num > 3) {
+                continue;
+            }
+            // 取引詳細ページにアクセス
+            $response = $client->get($trade['link'], [
+                'cookies' => $jar,
+            ]);
+            $html = $response->getBody()->getContents();
+// dd($html);
+
+            // DomCrawlerでHTMLを解析
+            $crawler = new Crawler($html);
+
+            // tableの内容を取得
+            $detail = [];
+            $crawler->filter('tbody.table-hover')->first()->filter('tr')
+                ->each(function ($node) use (&$detail) {
+                    if (!($node->filter('th')->eq(0)->count() > 0)) {
+                        $row = [
+                            'name' => $node->filter('td')->eq(0)->text(),
+                            'salse' => $node->filter('td')->eq(1)->text(),
+                            'in' => $node->filter('td')->eq(2)->text(),
+                            'out' => $node->filter('td')->eq(3)->text(),
+                        ];
+                        $detail[] = $row;
+                    }
+                });
+            $details[] = $detail;
+        }
+
+dd($tradeData,$newTrade,$details);
+
+        return $data = [
+            'newTrade' => $newTrade,
+            'details' => $details,
+        ];
     }
 
 

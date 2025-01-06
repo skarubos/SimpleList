@@ -63,19 +63,6 @@ class HomeController extends Controller
 
     public function dev_save(Request $request)
     {
-        $request->validate([
-            'id' => 'nullable|integer|exists:develops,id',
-            'text1' => 'nullable|string',
-            'text2' => 'nullable|string',
-            'text3' => 'nullable|string',
-            'int1' => 'nullable|integer',
-            'int2' => 'nullable|integer',
-            'int3' => 'nullable|integer',
-            'int4' => 'nullable|integer',
-            'int5' => 'nullable|integer',
-            'date' => 'nullable|date',
-        ]);
-    
         $id = $request->input('id') ?? null;
         $item = $id ? Develop::find($id) : new Develop;
     
